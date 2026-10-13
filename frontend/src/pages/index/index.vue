@@ -7,7 +7,7 @@ const pageTop=ref({})
 try {
   const capsule=uni.getMenuButtonBoundingClientRect()
   const status=uni.getWindowInfo().statusBarHeight || 0
-  pageTop.value={paddingTop:(Math.max(capsule.bottom || 0,status+44)+16)+'px'}
+  pageTop.value={paddingTop:Math.max(104,(capsule.bottom || 0)+16,status+60)+'px'}
 } catch {
   pageTop.value={paddingTop:'104px'}
 }
