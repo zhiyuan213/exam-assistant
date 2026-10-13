@@ -99,6 +99,10 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 当前 `build:mp-weixin` / `build:h5` 使用 `.env.production` 指向微信云托管测试地址；`dev:h5` / `dev:mp-weixin` 默认仍为本地模式。`.env.local` 等本地文件可能覆盖发布配置，切换前确认这些文件的内容。微信小程序使用 HTTPS 请求时，需在公众平台配置匹配的 request 合法域名；开发工具不校验域名仅适用于本地调试。云托管默认域名的测试限制以控制台提示为准，正式上线需确认自定义域名或微信云调用方案。
 
+当前正式小程序构建已切换为 `wx.cloud.callContainer`：`.env.production` 中 `VITE_API_TRANSPORT=cloudrun`，环境 ID 使用用户提供的值，服务名称为 `exam-assistant`。微信侧通过云调用路由 `/api/**`，不再以普通 `wx.request` 访问公网测试域名；H5仍使用HTTPS地址。需要云托管环境与当前小程序关联、服务运行正常且云调用可用。调用失败时检查控制台“云调用”入口和环境关联，而非继续修改 request 域名。后端认证仍使用原有微信code与Bearer会话，不信任前端自报openid。
+
+如果开发者工具仍显示旧首页或旧错误，请直接导入 `frontend/dist/build/mp-weixin`，确认首页顶部是绿色品牌标题和“＋”，而非旧版分享按钮。Vue源码更新后必须运行小程序构建，单击开发者工具“编译”不会重新编译Vue。
+
 ## Docker / MySQL
 
 微信云托管通过 GitHub 部署时，构建目录使用仓库根目录 `/`，Dockerfile 使用根目录 `Dockerfile`，端口 `8080`。根目录镜像默认启用 `prod`，部署环境变量必须设置 `DB_URL`、`DB_USER`、`DB_PASSWORD`。微信登录另外配置 `WECHAT_APPSECRET`，且保持 `DEMO_LOGIN=false`。密钥不放入仓库或 Docker 构建参数。

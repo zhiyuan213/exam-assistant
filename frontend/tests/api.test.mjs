@@ -4,10 +4,10 @@ import {readFile} from 'node:fs/promises'
 
 const endpoint='https://example.test/api'
 const planner=new URL('../src/utils/planner.mjs',import.meta.url).href
-async function loadApi() {
+async function loadApi(extra={}) {
   let source=await readFile(new URL('../src/api/index.js',import.meta.url),'utf8')
   source=source.replace("from '../utils/planner.mjs'",`from '${planner}'`)
-  source=source.replaceAll('import.meta.env',`({VITE_API_MODE:'server',VITE_API_BASE_URL:'${endpoint}'})`)
+  source=source.replaceAll('import.meta.env',`(${JSON.stringify({VITE_API_MODE:'server',VITE_API_BASE_URL:endpoint,...extra})})`)
   return import('data:text/javascript;base64,'+Buffer.from(source+'\n// '+Math.random()).toString('base64'))
 }
 test('concurrent cloud requests share one WeChat login and ignore local login tokens',async()=>{
@@ -42,4 +42,10 @@ test('domain validation failures show an actionable message without echoing requ
   globalThis.uni={getStorageSync:()=>'',request:({fail})=>fail({errMsg:'request:fail url not in domain list; sensitive-request-detail'})}
   const {request}=await loadApi()
   await assert.rejects(request('/config'),e=>e.message.includes('request 合法域名')&&!e.message.includes('sensitive-request-detail'))
+})
+test('WeChat cloud transport uses environment and service routing without a request-domain dependency',async()=>{
+  let initializations=0,calls=0
+  globalThis.uni={getStorageSync:()=> 'test-token',request:()=>{throw Error('HTTPS transport must not run')}}
+  globalThis.wx={cloud:{init:()=>initializations++,callContainer:options=>{calls++;assert.equal(options.config.env,'test-env');assert.equal(options.header['X-WX-SERVICE'],'test-service');assert.equal(options.header.Authorization,'Bearer test-token');assert.equal(options.path,'/api/health');options.success({statusCode:200,data:{status:'ok'}})}}}
+  try{const {request}=await loadApi({VITE_API_TRANSPORT:'cloudrun',VITE_CLOUD_ENV:'test-env',VITE_CLOUD_SERVICE:'test-service'});assert.deepEqual(await request('/health'),{status:'ok'});await request('/health');assert.equal(initializations,1);assert.equal(calls,2)}finally{delete globalThis.wx}
 })
