@@ -1,0 +1,12 @@
+.tools/
+.workbuddy/
+**/node_modules/
+**/dist/
+**/target/
+**/data/
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.DS_Store

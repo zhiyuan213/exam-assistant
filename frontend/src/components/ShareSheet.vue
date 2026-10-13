@@ -1,0 +1,9 @@
+<template><view v-if="visible" class="overlay" @click="$emit('close')"><view class="sheet" @click.stop><view class="section">把登科喵分享给同学</view><view class="muted">一起制定计划，一起向目标前进</view><button class="secondary" open-type="share">发送给微信好友</button><button @click="timeline">分享到朋友圈</button><button @click="copy">复制介绍</button><button @click="poster">生成分享海报</button><button class="muted" @click="$emit('close')">取消</button><canvas canvas-id="share-poster" class="canvas" style="width:300px;height:420px"/></view></view></template>
+<script setup>
+import {getCurrentInstance} from 'vue'
+defineProps({visible:Boolean});defineEmits(['close']);const instance=getCurrentInstance()
+function timeline(){uni.showModal({title:'分享到朋友圈',content:'请点击微信右上角“…”选择“分享到朋友圈”。能否使用以微信当前界面为准。',showCancel:false})}
+function copy(){uni.setClipboardData({data:'登科喵备考计划：制定学习计划，记录每日进步。在微信搜索“登科喵备考计划”体验。'})}
+function poster(){const ctx=uni.createCanvasContext('share-poster',instance.proxy);ctx.setFillStyle('#1677FF');ctx.fillRect(0,0,300,420);ctx.setFillStyle('#FFFFFF');ctx.setFontSize(28);ctx.fillText('登科喵备考计划',30,75);ctx.setFontSize(21);ctx.fillText('努力的你',30,155);ctx.fillText('每天都在靠近目标',30,195);ctx.setFontSize(16);ctx.fillText('制定计划 · 记录进步',30,285);ctx.fillText('微信搜索：登科喵备考计划',30,360);ctx.draw(false,()=>uni.canvasToTempFilePath({canvasId:'share-poster',success:r=>uni.previewImage({urls:[r.tempFilePath]}),fail:()=>uni.showToast({title:'海报生成失败，请重试',icon:'none'})},instance.proxy))}
+</script>
+<style scoped>.overlay{position:fixed;inset:0;background:#132B4D66;z-index:100;display:flex;align-items:flex-end}.sheet{width:100%;padding:24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));background:#fff;border-radius:40rpx 40rpx 0 0;text-align:center}.sheet button{margin-top:16rpx}.canvas{position:fixed;left:-9999px;top:-9999px}</style>

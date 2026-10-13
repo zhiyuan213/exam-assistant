@@ -1,0 +1,9 @@
+<template><view class="page"><view v-if="error" class="error">{{error}}</view><view v-else-if="!plan" class="loading">正在加载计划…</view><template v-else><view class="success-banner"><image src="/static/dengkemiao.png" mode="aspectFit"/><view class="title">计划生成完成！</view><view class="muted">已根据你的考试信息安排备考路线</view></view><view class="card"><view class="section">{{plan.examName}}</view><view class="row detail"><text class="muted">距离考试</text><text>{{plan.remainingDays}} 天</text></view><view class="row detail"><text class="muted">计划周期</text><text>{{weeks}} 周</text></view><view class="row detail"><text class="muted">每日学习</text><text>{{plan.dailyMinutes}} 分钟</text></view><view class="row detail"><text class="muted">总任务数</text><text>{{plan.totalTasks}} 项</text></view></view><button class="primary" @click="viewPlan">查看我的计划</button><button class="secondary adjust" @click="adjust">修改信息并新建计划</button></template></view></template>
+<script setup>
+import {ref,computed} from 'vue';import {onLoad} from '@dcloudio/uni-app';import {api,selected} from '../../api';import {daysBetween} from '../../utils/planner.mjs'
+const plan=ref(null),error=ref(''),weeks=computed(()=>plan.value?Math.ceil(daysBetween(plan.value.startDate,plan.value.examDate)/7):0)
+onLoad(async()=>{try{plan.value=await api.plan(selected())}catch(e){error.value=e.message}})
+function viewPlan(){uni.switchTab({url:'/pages/plan/index'})}function adjust(){uni.redirectTo({url:'/pages/exam/create?type='+plan.value.examType})}
+</script>
+<style scoped>.success-banner{text-align:center;background:linear-gradient(145deg,#E1F1FF,#F2F8FF);border-radius:24rpx;padding:20rpx 12rpx 34rpx;margin:10rpx 0 24rpx}.success-banner image{width:270rpx;height:270rpx}.success-banner .title{font-size:36rpx;margin:8rpx 0}.success-banner .muted{font-size:23rpx}.section{margin:0 0 16rpx}.detail{padding:15rpx 0;font-weight:650}.detail .muted{font-weight:400}.adjust{margin-top:18rpx}</style>
+

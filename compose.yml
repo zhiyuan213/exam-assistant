@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: exam_assistant
+      MYSQL_USER: exam
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 10s
+      retries: 20
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/exam_assistant?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      DB_USER: exam
+      DB_PASSWORD: ${DB_PASSWORD}
+      WECHAT_APPID: wxbee1bab19364f057
+      WECHAT_APPSECRET: ${WECHAT_APPSECRET:-}
+      DEMO_LOGIN: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      TZ: Asia/Shanghai
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+  redis:
+    image: redis:7-alpine
+    profiles: ["cache"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis-data:/data"]
+volumes:
+  mysql-data:
+  redis-data:
