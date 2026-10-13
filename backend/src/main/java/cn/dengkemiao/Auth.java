@@ -14,10 +14,17 @@ import java.nio.charset.StandardCharsets;
 public class Auth {
     private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(Auth.class);
     final Store store;
+    final com.fasterxml.jackson.databind.ObjectMapper json;
     @Value("${app.demo-login}") boolean demo;
     @Value("${app.wechat.appid}") String appid;
     @Value("${app.wechat.secret}") String secret;
-    public Auth(Store store) {this.store=store;}
+    public Auth(Store store, com.fasterxml.jackson.databind.ObjectMapper json) {this.store=store;this.json=json;}
+    static Map<?,?> exchange(RestClient client, com.fasterxml.jackson.databind.ObjectMapper json, String appid, String secret, String code) throws java.io.IOException {
+        // WeChat can label a JSON response as text/plain; decode the payload explicitly.
+        String body=client.get().uri(b->b.path("/sns/jscode2session").queryParam("appid",appid).queryParam("secret",secret).queryParam("js_code",code).queryParam("grant_type","authorization_code").build()).retrieve().body(String.class);
+        if(body==null || body.isBlank()) throw new java.io.IOException("Empty WeChat response");
+        return json.readValue(body,Map.class);
+    }
     String hash(String token) {try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8)));}catch(Exception e){throw new IllegalStateException(e);}}
     public Map<String,Object> login(String code, boolean demoRequest) {
         String openid;
@@ -30,7 +37,7 @@ public class Auth {
             if(secret.isBlank()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"尚未配置微信登录");
             Map<?,?> response;
             try {
-                response=RestClient.create("https://api.weixin.qq.com").get().uri(b->b.path("/sns/jscode2session").queryParam("appid",appid).queryParam("secret",secret).queryParam("js_code",code).queryParam("grant_type","authorization_code").build()).retrieve().body(Map.class);
+                response=exchange(RestClient.create("https://api.weixin.qq.com"),json,appid,secret,code);
             } catch(Exception e) {
                 Throwable cause=e;
                 for(int i=0;i<8 && cause.getCause()!=null;i++) cause=cause.getCause();
@@ -38,7 +45,11 @@ public class Auth {
                 log.warn("WeChat login request failed: type={}, cause={}",e.getClass().getSimpleName(),cause.getClass().getSimpleName());
                 throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"微信登录服务暂不可用");
             }
-            if(response==null || !(response.get("openid") instanceof String value)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"微信登录失效，请重试");
+            if(response==null || !(response.get("openid") instanceof String value) || value.isBlank()) {
+                Object errcode=response==null?null:response.get("errcode");
+                log.warn("WeChat login rejected: errcode={}",errcode instanceof Number?errcode:"unknown");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"微信登录失效，请重试");
+            }
             openid=value;
         }
         var users=store.jdbc().queryForList("SELECT id,nickname FROM app_user WHERE openid=?",openid);
