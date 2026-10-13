@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 @Service
 public class Auth {
+    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(Auth.class);
     final Store store;
     @Value("${app.demo-login}") boolean demo;
     @Value("${app.wechat.appid}") String appid;
@@ -30,7 +31,13 @@ public class Auth {
             Map<?,?> response;
             try {
                 response=RestClient.create("https://api.weixin.qq.com").get().uri(b->b.path("/sns/jscode2session").queryParam("appid",appid).queryParam("secret",secret).queryParam("js_code",code).queryParam("grant_type","authorization_code").build()).retrieve().body(Map.class);
-            } catch(Exception e) {throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"微信登录服务暂不可用");}
+            } catch(Exception e) {
+                Throwable cause=e;
+                for(int i=0;i<8 && cause.getCause()!=null;i++) cause=cause.getCause();
+                // Exception messages and request URLs can contain the AppSecret and login code.
+                log.warn("WeChat login request failed: type={}, cause={}",e.getClass().getSimpleName(),cause.getClass().getSimpleName());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"微信登录服务暂不可用");
+            }
             if(response==null || !(response.get("openid") instanceof String value)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"微信登录失效，请重试");
             openid=value;
         }
