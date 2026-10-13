@@ -25,6 +25,8 @@
 5. 默认是本地体验，数据只保存在当前设备，不调用网络服务。
 6. 首页 → 创建备考计划 → 填写日期/科目 → 生成 → 任务页打卡。
 
+也可以导入仓库根目录 `D:\code\exam-assistant`：根目录 `project.config.json` 已通过 `miniprogramRoot` 指向 `frontend/dist/build/mp-weixin/`。需要先执行构建；仅点击开发者工具的“编译”不会把 Vue 源码转换为小程序代码。若提示找不到 `app.json`，执行 `scripts/dev.ps1 build` 后重新打开项目。
+
 构建目录不提交 Git。其他电脑拉取仓库后需执行下面的构建命令。
 
 ## 前端开发与构建

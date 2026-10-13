@@ -10,3 +10,4 @@
 *.log
 .idea/
 .DS_Store
+project.private.config.json
