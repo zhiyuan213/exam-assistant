@@ -5,12 +5,6 @@ const plan=ref(null),tasks=ref([]),types=ref([]),loading=ref(true),error=ref('')
 async function load(){loading.value=true;error.value='';try{types.value=await api.templates();plan.value=await current();tasks.value=plan.value?await api.tasks(plan.value.id):[]}catch(e){error.value=e.message}finally{loading.value=false}}
 async function toggle(t){if(busy.value)return;busy.value=true;try{await api.complete(t.id,!t.completed);t.completed=!t.completed}catch(e){showError(e)}finally{busy.value=false}}
 onShow(()=>{
-// #ifdef MP-WEIXIN
-uni.showShareMenu({withShareTicket:true,menus:['shareAppMessage','shareTimeline'],fail:()=>{
-  // Some unverified accounts do not yet have sharing permissions.
-  // Keep the study workflow available while the platform completes verification.
-}})
-// #endif
 load()});onShareAppMessage(()=>({title:'登科喵备考计划 · 一起上岸',path:'/pages/index/index'}));onShareTimeline(()=>({title:'登科喵备考计划 · 一起上岸'}))
 function tab(name){uni.switchTab({url:'/pages/'+name+'/index'})}function create(code=''){uni.navigateTo({url:'/pages/exam/create?type='+(typeof code==='string'?code:'')})}
 </script>
@@ -19,6 +13,7 @@ function tab(name){uni.switchTab({url:'/pages/'+name+'/index'})}function create(
 <style scoped>.plus{margin:0}.start{padding:16rpx 20rpx;font-size:28rpx}</style>
 <style scoped>
 /* #ifdef MP-WEIXIN */
-.home{padding-top:calc(94rpx + env(safe-area-inset-top))}
+.home{padding-top:calc(112rpx + env(safe-area-inset-top))}
 /* #endif */
 </style>
+

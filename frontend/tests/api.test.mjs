@@ -4,9 +4,10 @@ import {readFile} from 'node:fs/promises'
 
 const endpoint='https://example.test/api'
 const planner=new URL('../src/utils/planner.mjs',import.meta.url).href
-async function loadApi(extra={}) {
+async function loadApi(extra={},wechat=false) {
   let source=await readFile(new URL('../src/api/index.js',import.meta.url),'utf8')
   source=source.replace("from '../utils/planner.mjs'",`from '${planner}'`)
+  source=source.replace('isWeChat=true','isWeChat='+wechat)
   source=source.replaceAll('import.meta.env',`(${JSON.stringify({VITE_API_MODE:'server',VITE_API_BASE_URL:endpoint,...extra})})`)
   return import('data:text/javascript;base64,'+Buffer.from(source+'\n// '+Math.random()).toString('base64'))
 }
@@ -47,5 +48,16 @@ test('WeChat cloud transport uses environment and service routing without a requ
   let initializations=0,calls=0
   globalThis.uni={getStorageSync:()=> 'test-token',request:()=>{throw Error('HTTPS transport must not run')}}
   globalThis.wx={cloud:{init:()=>initializations++,callContainer:options=>{calls++;assert.equal(options.config.env,'test-env');assert.equal(options.header['X-WX-SERVICE'],'test-service');assert.equal(options.header.Authorization,'Bearer test-token');assert.equal(options.path,'/api/health');options.success({statusCode:200,data:{status:'ok'}})}}}
-  try{const {request}=await loadApi({VITE_API_TRANSPORT:'cloudrun',VITE_CLOUD_ENV:'test-env',VITE_CLOUD_SERVICE:'test-service'});assert.deepEqual(await request('/health'),{status:'ok'});await request('/health');assert.equal(initializations,1);assert.equal(calls,2)}finally{delete globalThis.wx}
+  try{const {request}=await loadApi({VITE_API_TRANSPORT:'cloudrun',VITE_CLOUD_ENV:'test-env',VITE_CLOUD_SERVICE:'test-service'},true);assert.deepEqual(await request('/health'),{status:'ok'});await request('/health');assert.equal(initializations,1);assert.equal(calls,2)}finally{delete globalThis.wx}
+})
+test('promise-only cloud SDK responses settle requests instead of leaving the page loading',async()=>{
+  globalThis.uni={getStorageSync:()=>'',request:()=>{throw Error('Unexpected public request')}}
+  globalThis.wx={cloud:{init:()=>{},callContainer:()=>Promise.resolve({statusCode:200,data:{status:'ok'}})}}
+  try{const {request}=await loadApi({VITE_API_TRANSPORT:'cloudrun',VITE_CLOUD_ENV:'test-env',VITE_CLOUD_SERVICE:'test-service'},true);assert.deepEqual(await request('/health'),{status:'ok'})}finally{delete globalThis.wx}
+})
+test('configured WeChat cloud requests do not silently fall back to a public domain',async()=>{
+  globalThis.uni={getStorageSync:()=>'',request:()=>{throw Error('Unexpected public request')}}
+  delete globalThis.wx
+  const {request}=await loadApi({VITE_API_TRANSPORT:'cloudrun',VITE_CLOUD_ENV:'test-env',VITE_CLOUD_SERVICE:'test-service'},true)
+  await assert.rejects(request('/health'),/不支持云托管调用/)
 })
