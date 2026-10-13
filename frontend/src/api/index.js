@@ -1,16 +1,32 @@
 import {templates,generate,today,daysBetween,addDays} from '../utils/planner.mjs'
 export const localMode=import.meta.env.VITE_API_MODE!=='server'
 const base=import.meta.env.VITE_API_BASE_URL||'http://localhost:8080/api',KEY='dkm-local-plans-v1'
-export const selected=()=>uni.getStorageSync('dkm-selected')||''
-export function select(id){uni.setStorageSync('dkm-selected',id)}
+const sessionKey='dkm-token:'+base,selectedKey=localMode?'dkm-selected':'dkm-selected:'+base
+let loginPending=null
+export const selected=()=>uni.getStorageSync(selectedKey)||''
+export function select(id){uni.setStorageSync(selectedKey,id)}
 function read(){return uni.getStorageSync(KEY)||[]}
 function save(plans){try{uni.setStorageSync(KEY,plans)}catch(e){throw Error('设备存储空间不足，计划未保存，请使用服务端模式')}}
 function summarize(p){const done=p.tasks.filter(t=>t.completed).length;return {...p,tasks:undefined,remainingDays:Math.max(0,daysBetween(today(),p.examDate)),totalTasks:p.tasks.length,completedTasks:done,progress:Math.round(done*100/p.tasks.length),stages:p.stages.map(s=>{const ts=p.tasks.filter(t=>t.stageId===s.id);return {...s,progress:Math.round(ts.filter(t=>t.completed).length*100/ts.length)}})}}
 function find(id){const p=read().find(p=>p.id===id);if(!p)throw Error('计划不存在');return p}
-export function request(path,method='GET',data){return new Promise((resolve,reject)=>uni.request({url:base+path,method,data,timeout:15000,header:{'Content-Type':'application/json',Authorization:'Bearer '+(uni.getStorageSync('dkm-token')||'')},success:r=>{if(r.statusCode>=200&&r.statusCode<300)resolve(r.data);else {if(r.statusCode===401)uni.removeStorageSync('dkm-token');reject(Error(r.data?.message||'服务暂不可用'))}},fail:()=>reject(Error('无法连接服务，请检查后端地址与网络'))}))}
+export function request(path,method='GET',data){return new Promise((resolve,reject)=>uni.request({url:base+path,method,data,timeout:15000,header:{'Content-Type':'application/json',Authorization:'Bearer '+(uni.getStorageSync(sessionKey)||'')},success:r=>{if(r.statusCode>=200&&r.statusCode<300)resolve(r.data);else {if(r.statusCode===401)uni.removeStorageSync(sessionKey);reject(Error(r.data?.message||'服务暂不可用'))}},fail:()=>reject(Error('无法连接服务，请检查后端地址、微信合法域名与网络'))}))}
 export const api={
   async config(){return localMode?{demoLogin:true,paymentEnabled:false}:request('/config')},
-  async login(){if(localMode||uni.getStorageSync('dkm-token'))return;const cfg=await api.config();let response;if(cfg.demoLogin)response=await request('/auth/login','POST',{demo:true});else {const code=await new Promise((resolve,reject)=>uni.login({provider:'weixin',success:r=>resolve(r.code),fail:()=>reject(Error('请在微信小程序内登录'))}));response=await request('/auth/login','POST',{code,demo:false})}uni.setStorageSync('dkm-token',response.token)},
+  async login(){
+    if(localMode||uni.getStorageSync(sessionKey))return
+    if(loginPending)return loginPending
+    loginPending=(async()=>{
+      const cfg=await api.config()
+      let response
+      if(cfg.demoLogin)response=await request('/auth/login','POST',{demo:true})
+      else {
+        const code=await new Promise((resolve,reject)=>uni.login({provider:'weixin',success:r=>r.code?resolve(r.code):reject(Error('未获取微信登录code，请在小程序中重试')),fail:()=>reject(Error('请在微信小程序内登录'))}))
+        response=await request('/auth/login','POST',{code,demo:false})
+      }
+      uni.setStorageSync(sessionKey,response.token)
+    })()
+    try{return await loginPending}finally{loginPending=null}
+  },
   async templates(){return localMode?templates:request('/templates')},
   async plans(){if(localMode)return read().map(summarize).reverse();await api.login();return request('/plans')},
   async create(input){if(localMode){const p=generate(input);save([...read(),p]);select(p.id);return summarize(p)}await api.login();const p=await request('/plans','POST',input);select(p.id);return p},

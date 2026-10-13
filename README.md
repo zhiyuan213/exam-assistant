@@ -22,7 +22,7 @@
 2. 目录选择上述 **mp-weixin 编译目录**，不要选仓库根目录或 `frontend/src`。
 3. AppID：`wxbee1bab19364f057`（用户提供的本项目账号）。
 4. 使用普通小程序模式；本项目后端使用 Spring Boot，不要求启用云开发。
-5. 默认是本地体验，数据只保存在当前设备，不调用网络服务。
+5. 正式构建现已通过 `frontend/.env.production` 连接微信云托管测试后端，需要微信登录。开发模式默认仍是本地体验，数据保存在当前设备。
 6. 首页 → 创建备考计划 → 填写日期/科目 → 生成 → 任务页打卡。
 
 也可以导入仓库根目录 `D:\code\exam-assistant`：根目录 `project.config.json` 已通过 `miniprogramRoot` 指向 `frontend/dist/build/mp-weixin/`。需要先执行构建；仅点击开发者工具的“编译”不会把 Vue 源码转换为小程序代码。若提示找不到 `app.json`，执行 `scripts/dev.ps1 build` 后重新打开项目。
@@ -95,6 +95,8 @@ VITE_API_BASE_URL=http://localhost:8080/api
 重启前端并重新编译。开发者工具连接本机后端时，仅在本地调试设置中允许未配置的 localhost 地址；上线时必须使用 HTTPS 和已配置的 request 合法域名，不能沿用 localhost。
 
 本地模式与服务端模式的数据相互独立，不会自动迁移。服务端 token 有效期7天，过期后需要重新登录；体验登录产生新账号，正式微信登录按 openid 找回同一账号。
+
+当前 `build:mp-weixin` / `build:h5` 使用 `.env.production` 指向微信云托管测试地址；`dev:h5` / `dev:mp-weixin` 默认仍为本地模式。`.env.local` 等本地文件可能覆盖发布配置，切换前确认这些文件的内容。微信小程序使用 HTTPS 请求时，需在公众平台配置匹配的 request 合法域名；开发工具不校验域名仅适用于本地调试。云托管默认域名的测试限制以控制台提示为准，正式上线需确认自定义域名或微信云调用方案。
 
 ## Docker / MySQL
 
