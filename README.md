@@ -96,6 +96,10 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 ## Docker / MySQL
 
+微信云托管通过 GitHub 部署时，构建目录使用仓库根目录 `/`，Dockerfile 使用根目录 `Dockerfile`，端口 `8080`。根目录镜像默认启用 `prod`，部署环境变量必须设置 `DB_URL`、`DB_USER`、`DB_PASSWORD`。微信登录另外配置 `WECHAT_APPSECRET`，且保持 `DEMO_LOGIN=false`。密钥不放入仓库或 Docker 构建参数。
+
+原来的 `backend/Dockerfile` 仍供 Compose 使用，其构建目录是 `backend/`；不要把该 Dockerfile 与仓库根目录构建上下文混用。
+
 ```powershell
 Copy-Item .env.example .env
 # 修改 .env 的数据库密码与微信配置

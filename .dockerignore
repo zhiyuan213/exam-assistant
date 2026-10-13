@@ -1,0 +1,13 @@
+.git
+.tools
+.workbuddy
+.env
+.env.*
+frontend
+assets
+docs
+scripts
+backend/target
+backend/data
+**/node_modules
+**/*.log
