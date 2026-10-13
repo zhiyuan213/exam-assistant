@@ -9,7 +9,10 @@ function read(){return uni.getStorageSync(KEY)||[]}
 function save(plans){try{uni.setStorageSync(KEY,plans)}catch(e){throw Error('设备存储空间不足，计划未保存，请使用服务端模式')}}
 function summarize(p){const done=p.tasks.filter(t=>t.completed).length;return {...p,tasks:undefined,remainingDays:Math.max(0,daysBetween(today(),p.examDate)),totalTasks:p.tasks.length,completedTasks:done,progress:Math.round(done*100/p.tasks.length),stages:p.stages.map(s=>{const ts=p.tasks.filter(t=>t.stageId===s.id);return {...s,progress:Math.round(ts.filter(t=>t.completed).length*100/ts.length)}})}}
 function find(id){const p=read().find(p=>p.id===id);if(!p)throw Error('计划不存在');return p}
-export function request(path,method='GET',data){return new Promise((resolve,reject)=>uni.request({url:base+path,method,data,timeout:15000,header:{'Content-Type':'application/json',Authorization:'Bearer '+(uni.getStorageSync(sessionKey)||'')},success:r=>{if(r.statusCode>=200&&r.statusCode<300)resolve(r.data);else {if(r.statusCode===401)uni.removeStorageSync(sessionKey);reject(Error(r.data?.message||'服务暂不可用'))}},fail:()=>reject(Error('无法连接服务，请检查后端地址、微信合法域名与网络'))}))}
+export function request(path,method='GET',data){return new Promise((resolve,reject)=>uni.request({url:base+path,method,data,timeout:15000,header:{'Content-Type':'application/json',Authorization:'Bearer '+(uni.getStorageSync(sessionKey)||'')},success:r=>{if(r.statusCode>=200&&r.statusCode<300)resolve(r.data);else {if(r.statusCode===401)uni.removeStorageSync(sessionKey);reject(Error(r.data?.message||'服务暂不可用'))}},fail:e=>{
+  const domainBlocked=/domain.*(?:list|invalid)|合法域名/i.test(e?.errMsg||'')
+  reject(Error(domainBlocked?'服务域名未加入微信 request 合法域名，请在公众平台开发设置中添加后重新打开项目':'无法连接服务，请检查后端地址、微信合法域名与网络'))
+}}))}
 export const api={
   async config(){return localMode?{demoLogin:true,paymentEnabled:false}:request('/config')},
   async login(){

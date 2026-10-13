@@ -38,3 +38,8 @@ test('expired cloud tokens are removed without affecting another backend or loca
   assert.equal(selected(),'')
   select('cloud-plan');assert.equal(selected(),'cloud-plan');assert.equal(storage.get('dkm-selected'),'local-plan')
 })
+test('domain validation failures show an actionable message without echoing request details',async()=>{
+  globalThis.uni={getStorageSync:()=>'',request:({fail})=>fail({errMsg:'request:fail url not in domain list; sensitive-request-detail'})}
+  const {request}=await loadApi()
+  await assert.rejects(request('/config'),e=>e.message.includes('request 合法域名')&&!e.message.includes('sensitive-request-detail'))
+})
