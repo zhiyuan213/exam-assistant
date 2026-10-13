@@ -5,5 +5,5 @@ const plan=ref(null),error=ref(''),weeks=computed(()=>plan.value?Math.ceil(daysB
 onLoad(async()=>{try{plan.value=await api.plan(selected())}catch(e){error.value=e.message}})
 function viewPlan(){uni.switchTab({url:'/pages/plan/index'})}function adjust(){uni.redirectTo({url:'/pages/exam/create?type='+plan.value.examType})}
 </script>
-<style scoped>.success-banner{text-align:center;background:linear-gradient(145deg,#E1F1FF,#F2F8FF);border-radius:24rpx;padding:20rpx 12rpx 34rpx;margin:10rpx 0 24rpx}.success-banner image{width:270rpx;height:270rpx;border-radius:50%}.success-banner .title{font-size:36rpx;margin:8rpx 0}.success-banner .muted{font-size:23rpx}.section{margin:0 0 16rpx}.detail{padding:15rpx 0;font-weight:650}.detail .muted{font-weight:400}.adjust{margin-top:18rpx}</style>
+<style scoped>.success-banner{text-align:center;background:linear-gradient(145deg,#DFF5E8,#F4FCF7);border-radius:24rpx;padding:20rpx 12rpx 34rpx;margin:10rpx 0 24rpx}.success-banner image{width:270rpx;height:270rpx}.success-banner .title{font-size:36rpx;margin:8rpx 0}.success-banner .muted{font-size:23rpx}.section{margin:0 0 16rpx}.detail{padding:15rpx 0;font-weight:650}.detail .muted{font-weight:400}.adjust{margin-top:18rpx}</style>
 

@@ -3,19 +3,20 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "登科喵"
+        "navigationBarTitleText": "登科喵",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/exam/create",
       "style": {
-        "navigationBarTitleText": "创建备考计划"
+        "navigationBarTitleText": "添加考试"
       }
     },
     {
       "path": "pages/plan/index",
       "style": {
-        "navigationBarTitleText": "我的计划"
+        "navigationBarTitleText": "我的考试"
       }
     },
     {
@@ -27,13 +28,14 @@
     {
       "path": "pages/task/index",
       "style": {
-        "navigationBarTitleText": "学习任务"
+        "navigationBarTitleText": "今日任务",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/record/index",
       "style": {
-        "navigationBarTitleText": "学习记录"
+        "navigationBarTitleText": "学习统计"
       }
     },
     {
@@ -51,12 +53,12 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarBackgroundColor": "#F6F9FF",
-    "backgroundColor": "#F6F9FF"
+    "navigationBarBackgroundColor": "#F5FBF8",
+    "backgroundColor": "#F5FBF8"
   },
   "tabBar": {
-    "color": "#8794AA",
-    "selectedColor": "#1677FF",
+    "color": "#91A29A",
+    "selectedColor": "#11AF83",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
@@ -74,9 +76,15 @@
       },
       {
         "pagePath": "pages/task/index",
-        "text": "学习",
+        "text": "任务",
         "iconPath": "static/icons/study.png",
         "selectedIconPath": "static/icons/study-active.png"
+      },
+      {
+        "pagePath": "pages/record/index",
+        "text": "统计",
+        "iconPath": "static/icons/stats.png",
+        "selectedIconPath": "static/icons/stats-active.png"
       },
       {
         "pagePath": "pages/user/index",

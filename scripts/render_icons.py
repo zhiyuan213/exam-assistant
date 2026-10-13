@@ -4,8 +4,8 @@ from PIL import Image, ImageDraw
 
 dest = Path(__file__).resolve().parents[1] / 'frontend/src/static/icons'
 dest.mkdir(parents=True, exist_ok=True)
-for kind in ('home', 'plan', 'study', 'user'):
-    for active, color in ((False, '#B3BECD'), (True, '#1677FF')):
+for kind in ('home', 'plan', 'study', 'stats', 'user'):
+    for active, color in ((False, '#91A29A'), (True, '#11AF83')):
         image = Image.new('RGBA', (64, 64))
         d = ImageDraw.Draw(image)
         if kind == 'home':
@@ -22,6 +22,9 @@ for kind in ('home', 'plan', 'study', 'user'):
             d.line((32,22,32,49),fill='white',width=3)
             d.line((16,26,25,27),fill='white',width=3)
             d.line((16,34,25,35),fill='white',width=3)
+        elif kind == 'stats':
+            for x, top in ((12,32),(27,16),(42,25)):
+                d.rounded_rectangle((x,top,x+10,56),3,fill=color)
         else:
             d.ellipse((22,8,42,28),fill=color)
             d.rounded_rectangle((12,33,52,56),11,fill=color)
